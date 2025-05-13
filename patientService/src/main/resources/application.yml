@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: patient-service
+  kafka:
+    bootstrap-servers: localhost:9092
+
+server:
+  port: 8081
+
+# Configuración JWT
+app:
+  jwt:
+    secret: ${JWT_SECRET:my-super-secure-and-ultra-long-secret-key-for-jwt-authentication-in-hospital-system}
+    expiration-ms: 86400000  # 24 horas
+
+# Tópicos Kafka
+kafka:
+  topic:
+    patient-created: patient-created
+    patient-updated: patient-updated
+    patient-deleted: patient-deleted
+
+# Configuración del Actuator para monitoreo
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
