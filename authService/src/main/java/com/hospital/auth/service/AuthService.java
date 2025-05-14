@@ -1,60 +1,80 @@
 package com.hospital.auth.service;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.UserRecord;
+import com.google.cloud.firestore.Firestore;
+import com.google.firebase.cloud.FirestoreClient;
 import com.hospital.auth.model.User;
 import com.hospital.auth.util.JwtUtil;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AuthService {
     
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final JwtUtil jwtUtil;
+    private static final String USERS_COLLECTION = "users";
     
-    public User createUser(User user) throws FirebaseAuthException {
-        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                .setEmail(user.getEmail())
-                .setPassword(user.getPassword())
-                .setDisplayName(user.getFirstName() + " " + user.getLastName());
+    public AuthService(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+    
+    public User createUser(User user) throws ExecutionException, InterruptedException {
+        // Para el prototipo, guardaremos los usuarios directamente en Firestore
+        // en lugar de usar Firebase Auth
         
-        UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
+        String uid = UUID.randomUUID().toString();
+        user.setUid(uid);
         
-        // Set custom claims for role
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", user.getRole());
-        FirebaseAuth.getInstance().setCustomUserClaims(userRecord.getUid(), claims);
+        // En producción deberías hashear la contraseña
+        // Por simplicidad del prototipo, la guardamos tal cual (NO hacer en producción)
         
-        user.setUid(userRecord.getUid());
-        user.setPassword(null); // Don't return password
+        Firestore firestore = FirestoreClient.getFirestore();
+        firestore.collection(USERS_COLLECTION)
+                .document(uid)
+                .set(user)
+                .get();
         
-        log.info("User created with UID: {}", userRecord.getUid());
+        // No devolver la contraseña
+        user.setPassword(null);
+        
+        log.info("User created with UID: {}", uid);
         return user;
     }
     
-    public String login(String email, String password) throws FirebaseAuthException {
+    public String login(String email, String password) throws ExecutionException, InterruptedException {
         try {
-            // En producción, verificarías con Firebase Auth
-            // Aquí simplificamos para el prototipo
-            UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
+            // Buscar usuario en Firestore
+            Firestore firestore = FirestoreClient.getFirestore();
             
-            // Obtener role desde custom claims
-            String role = (String) userRecord.getCustomClaims().get("role");
+            var querySnapshot = firestore.collection(USERS_COLLECTION)
+                    .whereEqualTo("email", email)
+                    .get()
+                    .get();
+            
+            if (querySnapshot.isEmpty()) {
+                throw new RuntimeException("Usuario no encontrado");
+            }
+            
+            User user = querySnapshot.getDocuments().get(0).toObject(User.class);
+            
+            // En producción, compararías hashes de contraseña
+            if (!password.equals(user.getPassword())) {
+                throw new RuntimeException("Contraseña incorrecta");
+            }
             
             // Generar JWT token
-            String token = jwtUtil.generateToken(userRecord.getUid(), role);
+            String token = jwtUtil.generateToken(user.getUid(), user.getRole());
             
             log.info("User {} logged in successfully", email);
             return token;
             
-        } catch (FirebaseAuthException e) {
+        } catch (Exception e) {
             log.error("Login failed for user: {}", email, e);
             throw new RuntimeException("Invalid credentials", e);
         }

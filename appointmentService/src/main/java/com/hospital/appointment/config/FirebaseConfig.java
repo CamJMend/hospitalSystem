@@ -1,4 +1,4 @@
-package com.hospital.auth.config;
+package com.hospital.appointment.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
@@ -9,30 +9,28 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 
 @Configuration
 public class FirebaseConfig {
     
-    @PostConstruct
-    public void initialize() {
-        try {
+    @Bean
+    public FirebaseApp firebaseApp() throws IOException {
+        if (FirebaseApp.getApps().isEmpty()) {
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(
                             new ClassPathResource("firebase-config.json").getInputStream()))
                     .build();
             
-            if (FirebaseApp.getApps().isEmpty()) {
-                FirebaseApp.initializeApp(options);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            return FirebaseApp.initializeApp(options);
+        } else {
+            return FirebaseApp.getInstance();
         }
     }
     
     @Bean
-    public Firestore firestore() {
+    public Firestore firestore() throws IOException {
+        firebaseApp();
         return FirestoreClient.getFirestore();
     }
 }

@@ -1,121 +1,112 @@
 package com.hospital.patient.controller;
 
-import com.hospital.patient.dto.PatientDto;
-import com.hospital.patient.dto.PatientResponseDto;
+import com.hospital.patient.model.Patient;
 import com.hospital.patient.service.PatientService;
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/patients")
-@RequiredArgsConstructor
 public class PatientController {
-
+    
+    private static final Logger log = LoggerFactory.getLogger(PatientController.class);
     private final PatientService patientService;
-
-    @PostMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DOCTOR')")
-    public ResponseEntity<PatientResponseDto> createPatient(@Valid @RequestBody PatientDto patientDto) {
-        PatientResponseDto createdPatient = patientService.createPatient(patientDto);
-        return new ResponseEntity<>(createdPatient, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_PATIENT')")
-    public ResponseEntity<PatientResponseDto> getPatientById(@PathVariable Long id, HttpServletRequest request) {
-        // Verificar si es un paciente consultando su propio registro
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_PATIENT"))) {
-            Long userId = (Long) request.getAttribute("userId");
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            
-            // Si es un paciente, verificar que está accediendo a sus propios datos
-            // obtener el paciente para verificar el userId
-            PatientResponseDto patient = patientService.getPatientById(id);
-            
-            // Si el userId del token no coincide con el userId del paciente, denegar acceso
-            if (!userId.equals(patient.getId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-        }
-        
-        // Si es admin, doctor o el propio paciente, permitir acceso
-        PatientResponseDto patient = patientService.getPatientById(id);
-        return ResponseEntity.ok(patient);
-    }
-
-    @GetMapping("/identification/{identificationNumber}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DOCTOR')")
-    public ResponseEntity<PatientResponseDto> getPatientByIdentificationNumber(
-            @PathVariable String identificationNumber) {
-        PatientResponseDto patient = patientService.getPatientByIdentificationNumber(identificationNumber);
-        return ResponseEntity.ok(patient);
-    }
-
-    @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DOCTOR')")
-    public ResponseEntity<List<PatientResponseDto>> getAllPatients() {
-        List<PatientResponseDto> patients = patientService.getAllPatients();
-        return ResponseEntity.ok(patients);
-    }
-
-    @GetMapping("/search")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DOCTOR')")
-    public ResponseEntity<List<PatientResponseDto>> searchPatientsByLastName(
-            @RequestParam("lastName") String lastName) {
-        List<PatientResponseDto> patients = patientService.searchPatientsByLastName(lastName);
-        return ResponseEntity.ok(patients);
-    }
-
-    @GetMapping("/user")
-    @PreAuthorize("hasAnyAuthority('ROLE_PATIENT')")
-    public ResponseEntity<List<PatientResponseDto>> getPatientsByUserId(HttpServletRequest request) {
-        Long userId = (Long) request.getAttribute("userId");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        List<PatientResponseDto> patients = patientService.getPatientsByUserId(userId);
-        return ResponseEntity.ok(patients);
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DOCTOR')")
-    public ResponseEntity<PatientResponseDto> updatePatient(
-            @PathVariable Long id, @Valid @RequestBody PatientDto patientDto) {
-        PatientResponseDto updatedPatient = patientService.updatePatient(id, patientDto);
-        return ResponseEntity.ok(updatedPatient);
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Void> deletePatient(@PathVariable Long id) {
-        patientService.deletePatient(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping("/{id}/activate")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<PatientResponseDto> activatePatient(@PathVariable Long id) {
-        PatientResponseDto activatedPatient = patientService.activatePatient(id);
-        return ResponseEntity.ok(activatedPatient);
+    
+    public PatientController(PatientService patientService) {
+        this.patientService = patientService;
     }
     
-    // Endpoint público para validar que el servicio está funcionando
-    @GetMapping("/public/health")
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("Patient Service is running!");
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    public ResponseEntity<Patient> createPatient(@RequestBody Patient patient) {
+        try {
+            Patient createdPatient = patientService.createPatient(patient);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdPatient);
+        } catch (Exception e) {
+            log.error("Error creating patient", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'PACIENTE')")
+    public ResponseEntity<Patient> getPatientById(@PathVariable String id, Authentication auth) {
+        try {
+            Patient patient = patientService.getPatientById(id);
+            
+            // Verificar que un paciente solo pueda ver su propia información
+            if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PACIENTE"))) {
+                if (!patient.getUserId().equals(auth.getName())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            }
+            
+            return ResponseEntity.ok(patient);
+        } catch (Exception e) {
+            log.error("Error getting patient", e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'PACIENTE')")
+    public ResponseEntity<Patient> getPatientByUserId(@PathVariable String userId, Authentication auth) {
+        try {
+            // Verificar que un paciente solo pueda ver su propia información
+            if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PACIENTE"))) {
+                if (!userId.equals(auth.getName())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            }
+            
+            Patient patient = patientService.getPatientByUserId(userId);
+            return ResponseEntity.ok(patient);
+        } catch (Exception e) {
+            log.error("Error getting patient by userId", e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    public ResponseEntity<List<Patient>> getAllPatients() {
+        try {
+            List<Patient> patients = patientService.getAllPatients();
+            return ResponseEntity.ok(patients);
+        } catch (Exception e) {
+            log.error("Error getting all patients", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    public ResponseEntity<Patient> updatePatient(@PathVariable String id, @RequestBody Patient patient) {
+        try {
+            Patient updatedPatient = patientService.updatePatient(id, patient);
+            return ResponseEntity.ok(updatedPatient);
+        } catch (Exception e) {
+            log.error("Error updating patient", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deletePatient(@PathVariable String id) {
+        try {
+            patientService.deletePatient(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            log.error("Error deleting patient", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

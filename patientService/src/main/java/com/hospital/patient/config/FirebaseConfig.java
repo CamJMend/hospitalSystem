@@ -1,4 +1,4 @@
-package com.hospital.auth.config;
+package com.hospital.patient.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
