@@ -11,6 +11,7 @@
 
     <modules>
         <module>patientService</module>
+        <module>appointmentService</module>
     </modules>
 
     <properties>
@@ -21,7 +22,6 @@
         <grpc.version>1.58.0</grpc.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
-        <spring-kafka.version>3.0.12</spring-kafka.version>
         <jwt.version>0.11.5</jwt.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -89,13 +89,6 @@
                 <groupId>jakarta.annotation</groupId>
                 <artifactId>jakarta.annotation-api</artifactId>
                 <version>${jakarta.annotation-api.version}</version>
-            </dependency>
-
-            <!-- Spring Kafka -->
-            <dependency>
-                <groupId>org.springframework.kafka</groupId>
-                <artifactId>spring-kafka</artifactId>
-                <version>${spring-kafka.version}</version>
             </dependency>
 
             <!-- JWT -->

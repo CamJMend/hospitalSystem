@@ -1,7 +1,6 @@
 package com.hospital.patient.service;
 
 import com.hospital.patient.firebase.PatientFirebaseRepository;
-import com.hospital.patient.kafka.PatientEventProducer;
 import com.hospital.patient.model.Patient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,19 +12,14 @@ import java.util.Optional;
 public class PatientService {
 
     private final PatientFirebaseRepository patientRepository;
-    private final PatientEventProducer eventProducer;
 
     @Autowired
-    public PatientService(PatientFirebaseRepository patientRepository, PatientEventProducer eventProducer) {
+    public PatientService(PatientFirebaseRepository patientRepository) {
         this.patientRepository = patientRepository;
-        this.eventProducer = eventProducer;
     }
 
     public String createPatient(Patient patient) {
-        String patientId = patientRepository.save(patient);
-        // Send event to Kafka about new patient creation
-        eventProducer.sendPatientCreatedEvent(patient);
-        return patientId;
+        return patientRepository.save(patient);
     }
 
     public Optional<Patient> getPatientById(String id) {
@@ -39,20 +33,15 @@ public class PatientService {
     public String updatePatient(Patient patient) {
         Optional<Patient> existingPatient = patientRepository.findById(patient.getId());
         if (existingPatient.isPresent()) {
-            String patientId = patientRepository.save(patient);
-            // Send event to Kafka about patient update
-            eventProducer.sendPatientUpdatedEvent(patient);
-            return patientId;
+            return patientRepository.save(patient);
         }
-        return null; // Or throw exception if patient doesn't exist
+        return null;
     }
 
     public void deletePatient(String id) {
         Optional<Patient> patient = patientRepository.findById(id);
         if (patient.isPresent()) {
             patientRepository.deleteById(id);
-            // Send event to Kafka about patient deletion
-            eventProducer.sendPatientDeletedEvent(patient.get());
         }
     }
 

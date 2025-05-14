@@ -1,11 +1,9 @@
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/PatientServiceApplication.java
-/Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/config/KafkaConfig.java
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/config/SecurityConfig.java
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/controller/AuthController.java
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/controller/PatientController.java
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/firebase/FirebaseConfig.java
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/firebase/PatientFirebaseRepository.java
-/Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/kafka/PatientEventProducer.java
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/model/Patient.java
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/security/JwtAuthenticationFilter.java
 /Users/cam/Desktop/hospitalSystem/patientService/src/main/java/com/hospital/patient/security/JwtUtils.java

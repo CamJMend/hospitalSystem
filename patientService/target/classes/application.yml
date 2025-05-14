@@ -5,13 +5,6 @@ spring:
   application:
     name: patient-service
 
-kafka:
-  bootstrap-servers: localhost:9092
-  topic:
-    patient-created: patient-created
-    patient-updated: patient-updated
-    patient-deleted: patient-deleted
-
 jwt:
   secret: dGhpc2lzYXNlY3JldGtleWZvcmp3dHRva2VuZ2VuZXJhdGlvbmluaG9zcGl0YWxzeXN0ZW0=
   expiration: 600000
