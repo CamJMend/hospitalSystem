@@ -1,26 +1,32 @@
-spring:
-  application:
-    name: patient-service
-  kafka:
-    bootstrap-servers: localhost:9092
-
 server:
   port: 8081
 
-# Configuración JWT
-app:
-  jwt:
-    secret: ${JWT_SECRET:my-super-secure-and-ultra-long-secret-key-for-jwt-authentication-in-hospital-system}
-    expiration-ms: 86400000  # 24 horas
+spring:
+  application:
+    name: patient-service
 
-# Tópicos Kafka
 kafka:
+  bootstrap-servers: kafka:9092
   topic:
     patient-created: patient-created
     patient-updated: patient-updated
     patient-deleted: patient-deleted
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
-# Configuración del Actuator para monitoreo
+jwt:
+  secret: dGhpc2lzYXNlY3JldGtleWZvcmp3dHRva2VuZ2VuZXJhdGlvbmluaG9zcGl0YWxzeXN0ZW0=
+  expiration: 600000
+
+# Enable Swagger UI
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /api-docs
+
+# Actuator endpoints for health monitoring
 management:
   endpoints:
     web:

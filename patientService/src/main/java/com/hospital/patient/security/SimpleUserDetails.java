@@ -1,22 +1,25 @@
 package com.hospital.patient.security;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.stream.Collectors;
-
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-public class SimpleUserDetails implements UserDetails {
-    private String username;
-    private Collection<? extends GrantedAuthority> authorities;
+import java.util.Collection;
+import java.util.List;
 
-    public SimpleUserDetails(String username, String[] roles) {
+public class SimpleUserDetails implements UserDetails {
+
+    private final String username;
+    private final String password;
+    private final List<GrantedAuthority> authorities;
+    private final boolean accountNonExpired = true;
+    private final boolean accountNonLocked = true;
+    private final boolean credentialsNonExpired = true;
+    private final boolean enabled = true;
+
+    public SimpleUserDetails(String username, String password, List<GrantedAuthority> authorities) {
         this.username = username;
-        this.authorities = Arrays.stream(roles)
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toList());
+        this.password = password;
+        this.authorities = authorities;
     }
 
     @Override
@@ -26,7 +29,7 @@ public class SimpleUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return null;
+        return password;
     }
 
     @Override
@@ -36,21 +39,21 @@ public class SimpleUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return accountNonExpired;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return accountNonLocked;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;
+        return credentialsNonExpired;
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

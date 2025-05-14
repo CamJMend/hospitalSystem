@@ -1,85 +1,62 @@
 package com.hospital.patient.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
+import com.hospital.patient.firebase.PatientFirebaseRepository;
+import com.hospital.patient.kafka.PatientEventProducer;
+import com.hospital.patient.model.Patient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.hospital.patient.kafka.PatientEventProducer;
-import com.hospital.patient.model.Patient;
-
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Optional;
 
 @Service
-@Slf4j
 public class PatientService {
 
-    private final Map<String, Patient> patientRepository = new HashMap<>();
-    
+    private final PatientFirebaseRepository patientRepository;
+    private final PatientEventProducer eventProducer;
+
     @Autowired
-    private PatientEventProducer eventProducer;
-    
-    public Patient createPatient(Patient patient) {
-        String patientId = UUID.randomUUID().toString();
-        patient.setId(patientId);
-        
-        patientRepository.put(patientId, patient);
-        log.info("Patient created: {}", patient);
-        
-        // Publicar evento en Kafka
+    public PatientService(PatientFirebaseRepository patientRepository, PatientEventProducer eventProducer) {
+        this.patientRepository = patientRepository;
+        this.eventProducer = eventProducer;
+    }
+
+    public String createPatient(Patient patient) {
+        String patientId = patientRepository.save(patient);
+        // Send event to Kafka about new patient creation
         eventProducer.sendPatientCreatedEvent(patient);
-        
-        return patient;
+        return patientId;
     }
-    
-    public Patient getPatient(String id) {
-        return patientRepository.get(id);
+
+    public Optional<Patient> getPatientById(String id) {
+        return patientRepository.findById(id);
     }
-    
-    public Patient updatePatient(Patient patient) {
-        if (patientRepository.containsKey(patient.getId())) {
-            patientRepository.put(patient.getId(), patient);
-            log.info("Patient updated: {}", patient);
-            
-            // Publicar evento en Kafka
+
+    public List<Patient> getAllPatients() {
+        return patientRepository.findAll();
+    }
+
+    public String updatePatient(Patient patient) {
+        Optional<Patient> existingPatient = patientRepository.findById(patient.getId());
+        if (existingPatient.isPresent()) {
+            String patientId = patientRepository.save(patient);
+            // Send event to Kafka about patient update
             eventProducer.sendPatientUpdatedEvent(patient);
-            
-            return patient;
+            return patientId;
         }
-        return null;
+        return null; // Or throw exception if patient doesn't exist
     }
-    
-    public boolean deletePatient(String id) {
-        Patient patient = patientRepository.remove(id);
-        if (patient != null) {
-            log.info("Patient deleted with ID: {}", id);
-            
-            // Publicar evento en Kafka
-            eventProducer.sendPatientDeletedEvent(id);
-            
-            return true;
+
+    public void deletePatient(String id) {
+        Optional<Patient> patient = patientRepository.findById(id);
+        if (patient.isPresent()) {
+            patientRepository.deleteById(id);
+            // Send event to Kafka about patient deletion
+            eventProducer.sendPatientDeletedEvent(patient.get());
         }
-        return false;
     }
-    
-    public List<Patient> getAllPatients(int page, int size) {
-        List<Patient> patients = new ArrayList<>(patientRepository.values());
-        
-        int start = page * size;
-        int end = Math.min(start + size, patients.size());
-        
-        if (start > patients.size()) {
-            return new ArrayList<>();
-        }
-        
-        return patients.subList(start, end);
-    }
-    
-    public int getTotalPatientsCount() {
-        return patientRepository.size();
+
+    public List<Patient> getPatientsByName(String name) {
+        return patientRepository.findByName(name);
     }
 }

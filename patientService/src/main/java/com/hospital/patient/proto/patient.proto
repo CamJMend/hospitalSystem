@@ -1,92 +1,93 @@
 syntax = "proto3";
 
-package com.hospital.patient;
+package patient;
 
-option java_multiple_files = true;
 option java_package = "com.hospital.patient.proto";
-option java_outer_classname = "PatientProto";
+option java_multiple_files = true;
 
-// Modelo básico de paciente
-message Patient {
+// Patient message definition
+message PatientProto {
   string id = 1;
   string name = 2;
   string last_name = 3;
-  string identification = 4;
-  string email = 5;
-  string phone = 6;
-  string address = 7;
-  string birth_date = 8;
-  string blood_type = 9;
+  string date_of_birth = 4;
+  string gender = 5;
+  string email = 6;
+  string phone = 7;
+  string address = 8;
+  string medical_record_number = 9;
+  string insurance_info = 10;
 }
 
-// Solicitud para crear un paciente
+// Request message for creating a patient
 message CreatePatientRequest {
-  Patient patient = 1;
+  PatientProto patient = 1;
 }
 
-// Respuesta de creación de paciente
+// Response message for creating a patient
 message CreatePatientResponse {
-  Patient patient = 1;
-  bool success = 2;
-  string message = 3;
+  string patient_id = 1;
 }
 
-// Solicitud para obtener un paciente por ID
+// Request message for getting a patient by ID
 message GetPatientRequest {
-  string id = 1;
+  string patient_id = 1;
 }
 
-// Respuesta con datos del paciente
+// Response message for getting a patient
 message GetPatientResponse {
-  Patient patient = 1;
-  bool success = 2;
-  string message = 3;
+  PatientProto patient = 1;
 }
 
-// Solicitud para actualizar un paciente
+// Request message for updating a patient
 message UpdatePatientRequest {
-  Patient patient = 1;
+  PatientProto patient = 1;
 }
 
-// Respuesta de actualización de paciente
+// Response message for updating a patient
 message UpdatePatientResponse {
-  Patient patient = 1;
-  bool success = 2;
-  string message = 3;
+  string patient_id = 1;
 }
 
-// Solicitud para eliminar un paciente
+// Request message for deleting a patient
 message DeletePatientRequest {
-  string id = 1;
+  string patient_id = 1;
 }
 
-// Respuesta de eliminación de paciente
+// Response message for deleting a patient
 message DeletePatientResponse {
   bool success = 1;
-  string message = 2;
 }
 
-// Solicitud para listar pacientes
+// Request message for listing all patients
 message ListPatientsRequest {
-  int32 page = 1;
-  int32 size = 2;
+  // Optional pagination parameters
+  int32 page_size = 1;
+  int32 page_number = 2;
 }
 
-// Respuesta con lista de pacientes
+// Response message for listing all patients
 message ListPatientsResponse {
-  repeated Patient patients = 1;
-  int32 total_pages = 2;
-  int32 current_page = 3;
-  int32 total_elements = 4;
-  bool success = 5;
-  string message = 6;
+  repeated PatientProto patients = 1;
+  int32 total_count = 2;
 }
 
-// Definición del servicio gRPC (opcional pero recomendado)
+// Request message for searching patients by name
+message SearchPatientsByNameRequest {
+  string name = 1;
+}
+
+// Response message for searching patients by name
+message SearchPatientsByNameResponse {
+  repeated PatientProto patients = 1;
+}
+
+// Patient service definition
 service PatientService {
   rpc CreatePatient(CreatePatientRequest) returns (CreatePatientResponse);
   rpc GetPatient(GetPatientRequest) returns (GetPatientResponse);
   rpc UpdatePatient(UpdatePatientRequest) returns (UpdatePatientResponse);
   rpc DeletePatient(DeletePatientRequest) returns (DeletePatientResponse);
   rpc ListPatients(ListPatientsRequest) returns (ListPatientsResponse);
+  rpc SearchPatientsByName(SearchPatientsByNameRequest) returns (SearchPatientsByNameResponse);
 }
