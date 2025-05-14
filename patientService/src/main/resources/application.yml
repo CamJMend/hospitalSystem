@@ -6,14 +6,11 @@ spring:
     name: patient-service
 
 kafka:
-  bootstrap-servers: kafka:9092
+  bootstrap-servers: localhost:9092
   topic:
     patient-created: patient-created
     patient-updated: patient-updated
     patient-deleted: patient-deleted
-  producer:
-    key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 jwt:
   secret: dGhpc2lzYXNlY3JldGtleWZvcmp3dHRva2VuZ2VuZXJhdGlvbmluaG9zcGl0YWxzeXN0ZW0=
