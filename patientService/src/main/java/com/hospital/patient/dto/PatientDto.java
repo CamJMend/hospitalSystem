@@ -1,27 +1,25 @@
-package com.hospital.patient.model;
+package com.hospital.patient.dto;
 
+import com.hospital.patient.model.Patient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
-@Entity
-@Table(name = "patients")
 @Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Patient {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class PatientDto {
+    
     private Long id;
     
     @NotBlank(message = "El nombre es obligatorio")
@@ -32,7 +30,6 @@ public class Patient {
     @Size(min = 2, max = 50, message = "El apellido debe tener entre 2 y 50 caracteres")
     private String lastName;
     
-    @Column(unique = true)
     @NotBlank(message = "El número de identificación es obligatorio")
     private String identificationNumber;
     
@@ -50,16 +47,7 @@ public class Patient {
     @Size(max = 1000, message = "El historial médico no debe exceder los 1000 caracteres")
     private String medicalHistory;
     
-    @Enumerated(EnumType.STRING)
-    private BloodType bloodType;
+    private Patient.BloodType bloodType;
     
-    private boolean active = true;
-    
-    @Column(name = "user_id")
     private Long userId;
-    
-    public enum BloodType {
-        A_POSITIVE, A_NEGATIVE, B_POSITIVE, B_NEGATIVE, 
-        AB_POSITIVE, AB_NEGATIVE, O_POSITIVE, O_NEGATIVE, UNKNOWN
-    }
 }

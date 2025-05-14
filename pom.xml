@@ -12,6 +12,7 @@
     <modules>
         <module>patientService</module>
         <module>appointmentService</module>
+        <module>authService</module>
     </modules>
 
     <properties>
