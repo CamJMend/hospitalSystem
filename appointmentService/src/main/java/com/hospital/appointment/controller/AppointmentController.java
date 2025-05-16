@@ -28,7 +28,6 @@ public class AppointmentController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'PACIENTE')")
     public ResponseEntity<Appointment> createAppointment(@RequestBody Appointment appointment, Authentication auth) {
         try {
-            // Los pacientes solo pueden crear citas para sí mismos
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PACIENTE"))) {
                 appointment.setPatientId(auth.getName());
             }
@@ -47,7 +46,6 @@ public class AppointmentController {
         try {
             Appointment appointment = appointmentService.getAppointmentById(id);
             
-            // Verificar permisos
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PACIENTE"))) {
                 if (!appointment.getPatientId().equals(auth.getName())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -65,7 +63,6 @@ public class AppointmentController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'PACIENTE')")
     public ResponseEntity<List<Appointment>> getAppointmentsByPatient(@PathVariable String patientId, Authentication auth) {
         try {
-            // Los pacientes solo pueden ver sus propias citas
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PACIENTE"))) {
                 if (!patientId.equals(auth.getName())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -84,7 +81,6 @@ public class AppointmentController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
     public ResponseEntity<List<Appointment>> getAppointmentsByDoctor(@PathVariable String doctorId, Authentication auth) {
         try {
-            // Los médicos solo pueden ver sus propias citas
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MEDICO"))) {
                 if (!doctorId.equals(auth.getName())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -133,7 +129,6 @@ public class AppointmentController {
         try {
             Appointment appointment = appointmentService.getAppointmentById(id);
             
-            // Verificar permisos
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PACIENTE"))) {
                 if (!appointment.getPatientId().equals(auth.getName())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -157,7 +152,6 @@ public class AppointmentController {
         try {
             Appointment appointment = appointmentService.getAppointmentById(id);
             
-            // Solo el médico asignado puede completar la cita
             if (!appointment.getDoctorId().equals(auth.getName())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }

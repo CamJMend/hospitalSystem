@@ -40,8 +40,6 @@ public class PatientController {
     public ResponseEntity<Patient> getPatientById(@PathVariable String id, Authentication auth) {
         try {
             Patient patient = patientService.getPatientById(id);
-            
-            // Verificar que un paciente solo pueda ver su propia información
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PACIENTE"))) {
                 if (!patient.getUserId().equals(auth.getName())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -59,7 +57,6 @@ public class PatientController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'PACIENTE')")
     public ResponseEntity<Patient> getPatientByUserId(@PathVariable String userId, Authentication auth) {
         try {
-            // Verificar que un paciente solo pueda ver su propia información
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PACIENTE"))) {
                 if (!userId.equals(auth.getName())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

@@ -25,22 +25,13 @@ public class AuthService {
     }
     
     public User createUser(User user) throws ExecutionException, InterruptedException {
-        // Para el prototipo, guardaremos los usuarios directamente en Firestore
-        // en lugar de usar Firebase Auth
-        
         String uid = UUID.randomUUID().toString();
         user.setUid(uid);
-        
-        // En producción deberías hashear la contraseña
-        // Por simplicidad del prototipo, la guardamos tal cual (NO hacer en producción)
-        
         Firestore firestore = FirestoreClient.getFirestore();
         firestore.collection(USERS_COLLECTION)
                 .document(uid)
                 .set(user)
                 .get();
-        
-        // No devolver la contraseña
         user.setPassword(null);
         
         log.info("User created with UID: {}", uid);
@@ -49,7 +40,6 @@ public class AuthService {
     
     public String login(String email, String password) throws ExecutionException, InterruptedException {
         try {
-            // Buscar usuario en Firestore
             Firestore firestore = FirestoreClient.getFirestore();
             
             var querySnapshot = firestore.collection(USERS_COLLECTION)
@@ -62,13 +52,10 @@ public class AuthService {
             }
             
             User user = querySnapshot.getDocuments().get(0).toObject(User.class);
-            
-            // En producción, compararías hashes de contraseña
             if (!password.equals(user.getPassword())) {
                 throw new RuntimeException("Contraseña incorrecta");
             }
             
-            // Generar JWT token
             String token = jwtUtil.generateToken(user.getUid(), user.getRole());
             
             log.info("User {} logged in successfully", email);

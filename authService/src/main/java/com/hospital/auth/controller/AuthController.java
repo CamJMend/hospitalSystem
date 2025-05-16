@@ -25,7 +25,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         try {
-            // Validaciones básicas
             if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Email es requerido"));
             }
@@ -33,7 +32,7 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Password debe tener al menos 6 caracteres"));
             }
             if (user.getRole() == null || user.getRole().trim().isEmpty()) {
-                user.setRole("paciente"); // Rol por defecto
+                user.setRole("paciente");
             }
             
             User createdUser = authService.createUser(user);

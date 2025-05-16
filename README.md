@@ -1,169 +1,75 @@
+# Sistema Hospitalario
 
-Probar Auth
+## Arquitectura General (diagrama de despliegue)
 
-eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoibWVkaWNvIiwic3ViIjoiMjcwOGQxN2YtNGYxNC00YzljLTk1OWQtZjUyNmVlZDgyMzA4IiwiaWF0IjoxNzQ3MjU0MTA3LCJleHAiOjE3NDczNDA1MDd9.oXJB-c_UIalrfXmKVwKOmw3iUaU-D3VRbel-NSKpxuo
+![Arquitectura de Microservicios](diagrama-arquitectura.png)
 
-eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoicGFjaWVudGUiLCJzdWIiOiJkYzZjMmZiNC04YmIyLTQ2NmEtOGMxOC05ODRmZjQ3OWNkZWIiLCJpYXQiOjE3NDcyNTU4ODUsImV4cCI6MTc0NzM0MjI4NX0.f-GAONCdxCA0kxH1XlKi067WUzvW5tcuCr2zHD2Wcr0
+1. **AuthService**: Gestión de usuarios y autenticación
+2. **PatientService**: Gestión de información médica de pacientes
+3. **AppointmentService**: Gestión de citas médicas
 
-``` bash
-curl -X POST http://localhost:8081/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "doctor@hospital.com",
-    "password": "password123",
-    "firstName": "Dr. Juan",
-    "lastName": "Pérez",
-    "role": "medico"
-  }'
+## Mecanismos de Integración
+
+### 1. Autenticación basada en JWT
+
+El elemento central de integración entre los microservicios es un sistema de autenticación basado en tokens JWT (JSON Web Tokens).
+
+**Flujo de Autenticación**:
+1. Un usuario se registra o inicia sesión a través del AuthService
+2. El AuthService genera un token JWT firmado que incluye:
+   - El identificador del usuario (userId/uid)
+   - El rol del usuario (paciente, medico, admin)
+   - Firma digital usando una clave secreta compartida
+   - Fecha de expiración
+3. El cliente almacena este token
+4. El cliente incluye el token en el header Authorization de todas las solicitudes a cualquier microservicio
+5. Cada microservicio valida el token de forma independiente usando la misma clave secreta
+6. Si el token es válido, el microservicio permite el acceso basado en el rol incluido en el token
 
 
-  curl -X POST http://localhost:8081/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "doctor@hospital.com",
-    "password": "password123"
-  }'
+### 2. Control de Acceso Basado en Roles (RBAC)
 
+Los roles definidos en AuthService se utilizan de manera consistente en todos los microservicios:
 
-  curl -X POST http://localhost:8081/api/auth/validate \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+- **admin**: Acceso completo a todo el sistema
+- **medico**: Acceso a gestión de pacientes y citas
+- **paciente**: Acceso limitado a su propia información
+
+## Seguridad en la Integración
+
+### Clave Secreta Compartida
+
+Todos los microservicios utilizan la misma clave secreta para validar tokens JWT. Esta clave está configurada en cada servicio:
+
+```properties
+# En cada application.properties
+jwt.secret=MySecretKeyForJWTHospitalSystem2024
 ```
 
-Probar Patients
-```bash
-curl -X POST http://localhost:8082/api/patients \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer TU_TOKEN_AQUI" \
-  -d '{
-    "userId": "patient-001",
-    "firstName": "María",
-    "lastName": "González",
-    "email": "maria.gonzalez@email.com",
-    "phone": "+521234567890",
-    "dateOfBirth": "1990-05-15",
-    "gender": "F",
-    "address": "Calle Principal 123, Zapopan, Jalisco",
-    "bloodType": "A+",
-    "allergies": "Penicilina",
-    "medicalHistory": "Hipertensión leve",
-    "emergencyContact": "Juan González",
-    "emergencyPhone": "+520987654321"
-  }
+### Validación del Token
 
-curl -X GET http://localhost:8082/api/patients \
-  -H "Authorization: Bearer TU_TOKEN_AQUI"
+Cada microservicio valida el token de forma independiente:
 
-curl -X GET http://localhost:8082/api/patients/ID_DEL_PACIENTE \
-  -H "Authorization: Bearer TU_TOKEN_AQUI"
+1. Verifica la firma digital usando la clave secreta compartida
+2. Comprueba que el token no haya expirado
+3. Extrae el userId y el rol para control de acceso
 
-curl -X GET http://localhost:8082/api/patients/user/patient-001 \
-  -H "Authorization: Bearer TU_TOKEN_AQUI"
+### Verificación de Permisos
 
-curl -X PUT http://localhost:8082/api/patients/ID_DEL_PACIENTE \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer TU_TOKEN_AQUI" \
-  -d '{
-    "userId": "patient-001",
-    "firstName": "María",
-    "lastName": "González López",
-    "email": "maria.gonzalez@email.com",
-    "phone": "+521234567890",
-    "dateOfBirth": "1990-05-15",
-    "gender": "F",
-    "address": "Calle Principal 123, Zapopan, Jalisco",
-    "bloodType": "A+",
-    "allergies": "Penicilina, Aspirina",
-    "medicalHistory": "Hipertensión leve, Asma",
-    "emergencyContact": "Juan González",
-    "emergencyPhone": "+520987654321"
-  }
+Cada microservicio implementa su propia lógica de autorización basada en roles:
 
-
-curl -X DELETE http://localhost:8082/api/patients/ID_DEL_PACIENTE \
-  -H "Authorization: Bearer TU_TOKEN_AQUI"
-
-# 8. Probar acceso sin token (debe fallar)
-curl -X GET http://localhost:8082/api/patients
-
-# 9. Crear un usuario paciente
-curl -X POST http://localhost:8081/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "paciente1@email.com",
-    "password": "password123",
-    "firstName": "Pedro",
-    "lastName": "López",
-    "role": "paciente"
-  }'
-
-# 10. Login como paciente
-curl -X POST http://localhost:8081/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "paciente1@email.com",
-    "password": "password123"
-  }'
-
-# 11. Intentar crear un paciente como rol paciente (debe fallar)
-curl -X POST http://localhost:8082/api/patients \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer TOKEN_DEL_PACIENTE" \
-  -d '{
-    "userId": "patient-003",
-    "firstName": "Test",
-    "lastName": "Test",
-    "email": "test@email.com"
-  }'
-
-  # 2. Crear cita usando el ID del paciente existente
-echo "2. Creando cita para paciente existente..."
-curl -X POST "$APPOINTMENT_URL" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "patientId": "1dee65f4-6298-40aa-a941-9cd1182bb307",
-    "patientName": "María González",
-    "doctorId": "doctor-uid-123",
-    "doctorName": "Dr. Juan Pérez",
-    "dateTime": "2025-01-20T10:00:00",
-    "duration": 30,
-    "reason": "Consulta general",
-    "specialty": "Medicina General",
-    "notes": "Primera visita"
-  }
-
-echo -e "\n"
-
-# 3. Obtener citas del paciente
-echo "3. Obteniendo citas del paciente..."
-curl -X GET "$APPOINTMENT_URL/patient/1dee65f4-6298-40aa-a941-9cd1182bb307" \
-  -H "Authorization: Bearer $TOKEN" | jq '.' 2>/dev/null || cat
-
-echo -e "\n"
-
-# 4. También puedes obtener el paciente por su userId y usar ese ID
-echo "4. Obteniendo paciente por userId para usar en citas..."
-PATIENT_RESPONSE=$(curl -s -X GET "$PATIENT_URL/user/patient-001" \
-  -H "Authorization: Bearer $TOKEN")
-
-PATIENT_ID=$(echo $PATIENT_RESPONSE | grep -o '"id":"[^"]*' | sed 's/"id":"//')
-echo "Patient ID encontrado: $PATIENT_ID"
-echo ""
-
-# 5. Crear otra cita usando el userId para buscar
-echo "5. Creando segunda cita usando el patientId recuperado..."
-curl -X POST "$APPOINTMENT_URL" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "{
-    \"patientId\": \"$PATIENT_ID\",
-    \"patientName\": \"María González\",
-    \"doctorId\": \"doctor-uid-123\",
-    \"doctorName\": \"Dr. Juan Pérez\",
-    \"dateTime\": \"2025-01-21T11:00:00\",
-    \"duration\": 45,
-    \"reason\": \"Revisión de resultados\",
-    \"specialty\": \"Medicina General\",
-    \"notes\": \"Segunda visita - control\"
-  }" | jq '.' 2>/dev/null || cat
+```java
+// Ejemplo en controllers
+@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'PACIENTE')")
+@PreAuthorize("hasRole('ADMIN')")
 ```
+
+Además, se realizan verificaciones adicionales para asegurar que un paciente solo pueda acceder a su propia información.
+
+## Ventajas de esta Arquitectura de Integración
+
+1. **Bajo acoplamiento**: Los microservicios pueden funcionar y evolucionar de manera independiente
+3. **Escalabilidad horizontal**: Cada servicio puede escalar según sus necesidades específicas
+4. **Consistencia en seguridad**: El mismo mecanismo JWT se usa en todo el sistema
+5. **Simplicidad**: No requiere infraestructura adicional de comunicación entre servicios

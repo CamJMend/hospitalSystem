@@ -8,7 +8,7 @@ public class Appointment {
     private String patientName;
     private String doctorId;
     private String doctorName;
-    private String dateTime; // Cambiado a String para evitar problemas con Firestore
+    private String dateTime;
     private Integer duration; // en minutos
     private String status; // SCHEDULED, CONFIRMED, CANCELLED, COMPLETED
     private String reason;

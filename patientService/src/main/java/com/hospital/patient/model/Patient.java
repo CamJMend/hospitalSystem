@@ -7,7 +7,7 @@ public class Patient {
     private String lastName;
     private String email;
     private String phone;
-    private String dateOfBirth; // Cambiado de LocalDate a String
+    private String dateOfBirth;
     private String gender;
     private String address;
     private String bloodType;
@@ -18,7 +18,6 @@ public class Patient {
     
     public Patient() {}
     
-    // Constructor con todos los campos
     public Patient(String id, String userId, String firstName, String lastName, 
                   String email, String phone, String dateOfBirth, String gender,
                   String address, String bloodType, String allergies, String medicalHistory,

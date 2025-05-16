@@ -34,7 +34,6 @@ public class AppointmentService {
         appointment.setCreatedAt(LocalDateTime.now().format(formatter));
         appointment.setUpdatedAt(LocalDateTime.now().format(formatter));
         
-        // Verificar disponibilidad del doctor
         if (!isDoctorAvailable(appointment.getDoctorId(), appointment.getDateTime(), appointment.getDuration())) {
             throw new RuntimeException("El doctor no está disponible en ese horario");
         }
@@ -101,7 +100,6 @@ public class AppointmentService {
         appointment.setId(id);
         appointment.setUpdatedAt(LocalDateTime.now().format(formatter));
         
-        // Si se está cambiando la fecha/hora, verificar disponibilidad
         if (appointment.getDateTime() != null) {
             Appointment existingAppointment = getAppointmentById(id);
             if (!existingAppointment.getDateTime().equals(appointment.getDateTime())) {
